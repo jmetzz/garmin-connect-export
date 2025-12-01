@@ -1,3 +1,13 @@
+# Environment file with credentials
+.env
 
+# Python cache
+*.pyc
+__pycache__/
+
+# Activity exports
+*_garmin_connect_export/
+
+# macOS
 .DS_Store
 extras/

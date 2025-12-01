@@ -1,102 +1,108 @@
 garmin-connect-export
 =====================
 
-Downloads gpx, tcx or original fit files from your Garmin Connect Account.
+Modern Python 3 script to download GPX, TCX, FIT, or JSON files from your Garmin Connect account.
 
 Description
 -----------
-This script downloads gpx, tcx or original fit files from your personal Garmin Connect Account.
+This script uses the modern `garminconnect` library to authenticate with Garmin Connect and download your activities in multiple formats.
 
-All downloaded data will go into a working directory called `YYYY-MM-DD_garmin_connect_export/`.
+**Features:**
+- Modern OAuth authentication (works with current Garmin Connect API)
+- Support for GPX, TCX, FIT, and JSON formats
+- Automatic FIT file extraction from ZIP archives
+- Date-prefixed filenames for easy organization (YYYY-MM-DD_activityid)
+- Secure credential management via `.env` file
+- Configurable output directory
+- Activity summary saved as JSON
 
-Activity details like activity title or activity description will be persisted using the Activity ID in a separate JSON file called `activities.json`. This JSON can be used for parsing data towards additional data sources.
+**File Formats:**
+- **FIT** (default): Binary format with full workout data (power, heart rate, cadence, etc.)
+- **TCX**: XML format with detailed trackpoint data
+- **GPX**: GPS track format (may be empty for indoor activities)
+- **JSON**: Complete activity metadata and details
 
-If there is no GPS track data (e.g., due to an indoor treadmill workout), a data file will still be saved.
-If the GPX format is used, activity title and description data will be saved.
-If the original format is used, Garmin may not provide a file at all and an empty file will be created.
-For activities where a GPX file was uploaded, Garmin may not have a TCX file available for download, so an empty file will be created.
-Since GPX is the only format Garmin should have for every activity, it is the default and preferred download format.
-If you have thousands of activities you may run into an "operation timed out" message. Just re-run it again. It will pick up where it left off.
+All files are saved with the activity date in the filename (e.g., `2025-11-30_12345678.fit`) for easy sorting and identification.
+
+Requirements
+------------
+```bash
+pip3 install garminconnect
+```
+
+Setup
+-----
+1. Create a `.env` file in the same directory as the script:
+```bash
+GARMIN_USERNAME=your_email@example.com
+GARMIN_PASSWORD=your_password
+```
+
+2. Make sure `.env` is in your `.gitignore` to keep credentials secure
 
 Usage
 -----
-To get it actually flying you might need a tiny bit of experience running things from the command line. If you read the term "terminal" for the very first time or googled "running things from command line" already in another browser tab, it will be challenging to get it finally working.
-
-Having that said, here are the usage details from the `--help` flag:
-
+```bash
+python3 garmin_export.py [-h] [--username USERNAME] [--password PASSWORD] 
+                         [-c COUNT] [-f {gpx,tcx,fit,json}] [-d DIRECTORY]
 ```
-usage:
 
-    gcexport.py [-h] [--version] [--username [USERNAME]]
-                [--password [PASSWORD]] [-c [COUNT]]
-                [-f [{gpx,tcx,original}]] [-d [DIRECTORY]] [-u]
+**Options:**
 
-optional arguments:
-
-    -h, --help
-    
-        show this help message and exit
-    
-    --version
-    
-        print version and exit
-    
-    --username [USERNAME]
-    
-        your Garmin Connect username
-        otherwise, you will be prompted
-    
-    --password [PASSWORD]
-    
-        your Garmin Connect password
-        otherwise, you will be prompted
-    
-    -c [COUNT], --count [COUNT]
-    
-        number of recent activities to download, limit is 1000
-        default: 1
-    
-    -f [{gpx,tcx,original}], --format [{gpx,tcx,original}]
-    
-        export format; can be 'gpx', 'tcx', or 'original'
-        default: 'gpx'
-        
-    -d [DIRECTORY], --directory [DIRECTORY]
-    
-        the directory to export to
-        default: './YYYY-MM-DD_garmin_connect_export'
-        
-    -u, --unzip
-    
-        if downloading zip files (format: 'original')
-        unzipping files and removing zip file
-```
+- `-h, --help` - Show help message
+- `--username USERNAME` - Garmin Connect username (or use `.env` file)
+- `--password PASSWORD` - Garmin Connect password (or use `.env` file)
+- `-c COUNT, --count COUNT` - Number of recent activities to download (default: 10)
+- `-f {gpx,tcx,fit,json}, --format {gpx,tcx,fit,json}` - Export format (default: fit)
+- `-d DIRECTORY, --directory DIRECTORY` - Output directory (default: `/Users/aj/SynologyDrive/Cycling/Garmin`)
 
 Examples
 --------
-`python gcexport.py -d ~/MyActivities -c 3 -f original -u --username mygarminusername --password mygarminpassword`
 
-downloads your 3 most recent activities in the FIT file format (or whatever they were uploaded as) into the `~/MyActivities` directory (unless they already exist)
+**Download last 15 activities as FIT files (uses default directory):**
+```bash
+python3 garmin_export.py -c 15
+```
 
-Dislaimer
+**Download last 5 activities as TCX to custom directory:**
+```bash
+python3 garmin_export.py -c 5 -f tcx -d ~/MyActivities
+```
 
-Using the `--username` and `--password` flags are not recommended because your password will be stored in your command line history. Instead, omit them to be prompted (and note that nothing will be displayed when you type your password).
+**Download last 10 activities as JSON with full details:**
+```bash
+python3 garmin_export.py -c 10 -f json
+```
 
-Python
+**Use credentials from command line (not recommended):**
+```bash
+python3 garmin_export.py -c 3 --username user@example.com --password mypassword
+```
+
+**Best practice:** Use a `.env` file for credentials to keep them secure and out of command history.
+
+Output
 ------
-Alternatively, you may run it with `./gcexport.py` if you set the file as executable (i.e., `chmod u+x gcexport.py`). This requires Python. Luckly most Mac and Linux users should already have it. Beside that and as already mentioned above some basic command line experience might be helpful.
+The script will:
+1. Authenticate with Garmin Connect
+2. Download the requested number of activities
+3. Save each activity with a date-prefixed filename (e.g., `2025-11-30_12345678.fit`)
+4. Save an activity summary as `activities_summary.json`
+5. For FIT format: Automatically extract files from ZIP archives
+6. Show progress and success count
 
-`python /mygarminconnectexportscriptfolder/gcexport.py -d /mygarminconnectexportsfolder -c "mynumberofexports" -f original -u --username "mygarminusername" --password "mygarminpassword"`
+**File naming:** Activities are saved as `YYYY-MM-DD_activityid.ext` making it easy to sort chronologically and identify specific workouts.
 
-executes from command line, downloads the definied number of original FIT files to your destination folder
+Notes
+-----
+- **Credentials:** Store in `.env` file for security. Never commit credentials to version control.
+- **Indoor Activities:** GPX files may be empty for indoor workouts (no GPS data). Use FIT or TCX for full workout metrics.
+- **FIT Files:** Contain the most complete data including power, heart rate, cadence, and other sensor data.
+- **Activity Summary:** All activity metadata is saved to `activities_summary.json` for parsing to other applications.
 
-JSON Data
----------
-If you want to see all raw data Garmin Connect hands to this script, just print out the contents of the `json_results` variable. This should might be most useful for parsing data to other data sources.
-
-But still, some information might be missing, such as your "Favorites" from Garmin Connect. Unfortunately this is only available from the Garmin Connect web interface and simply not included in data given into this script.
-
-Also, be careful with speed data as it is sometimes measured as a pace (minutes per mile) or as a speed (miles per hour).
+Legacy Script
+-------------
+The original `gcexport.py` script is still included but uses outdated authentication and may not work with current Garmin Connect. Use `garmin_export.py` instead.
 
 Contributions
 -------------
