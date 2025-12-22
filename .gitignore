@@ -1,3 +1,24 @@
+# Environment file with credentials
+.env
 
+# Python cache
+*.pyc
+__pycache__/
+
+# Activity exports
+*_garmin_connect_export/
+garmin_exports/
+*.fit
+*.tcx
+*.gpx
+*.json
+
+# macOS
 .DS_Store
 extras/
+
+# Development/testing files
+test_fit/
+view_tcx.py
+fix_fit_sport.py
+gcexport.py
